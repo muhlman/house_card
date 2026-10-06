@@ -115,7 +115,7 @@ class ForkUHouseCard extends HTMLElement {
     static getStubConfig() {
       return {
         language: "pl",
-        image: "/local/community/fork_u-house_card/images/",
+        image_path: "/local/community/house_card/images/",
         
         // Entities
         weather_entity: "weather.forecast_home",
@@ -210,7 +210,7 @@ class ForkUHouseCard extends HTMLElement {
     }
 
     _imagePath() {
-        return this._config.image_path || "/local/community/fork_u-house_card/images/";
+        return this._config.image_path || "/local/community/house_card/images/";
     }
 
     // Overlay image candidates, most specific first. Tokens: {time} day|night, {season},

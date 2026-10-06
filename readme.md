@@ -1,227 +1,195 @@
 # 🏠 Fork U-House Card
 
-## REQUIRED: 
-1. Add `season.season` in integrations.
-2. Add `sun.sun` sensor in integrations.
-3. Using Google's API, add UV index and pollen sensors (google for this, it's free anyway).
-4. You will need also from Google AQI sensors ;)
-5. Add Google Weather or OpenWeatherMap integration - both are free (even if asked to add credit card for OpenWeatherAPI - just use a virtual card like Revolut and close it after).
-   *If you have an old OpenWeatherMap API added before 2025 it may not report additional attributes (don't know if I'm right but had this issue).*
-   
-**NOTE:** Wind direction sensor is mandatory for cloud animation direction movement!
-
-I know it's a lot, but if you don't use them then you did not unlock secret items. The journey will start now ;)
+> This is a fork of [silasmariusz/fork_u-house_card](https://github.com/silasmariusz/fork_u-house_card).
+> It adds unit awareness (°F / mph installs), aspect-ratio sizing so the house is never cropped,
+> entity-driven image overlays (e.g. a vehicle on the driveway while someone is home), and a
+> readme that matches what the card actually does. All credit for the card itself goes upstream.
 
 ![msedge_bNu5APEUJq](https://github.com/user-attachments/assets/8405dc20-4e71-4588-a56a-044292b8ab87)
 
-An advanced, glassmorphism-styled Home Assistant Lovelace card designed for monitoring home climate, weather conditions, and environmental hazards.
-
-**Temperature monitoring, smart AI weather advice, and immersive visual effects.**
+An isometric, glassmorphism-styled Home Assistant Lovelace card: your house rendered per season,
+time of day and weather, with animated rain, snow, fog, stars and clouds on top, room temperature
+badges, and a one-line "storyteller" advisory built from your weather and air sensors.
 
 "Fork U" means I DON'T FCKING CARE, you have to mod this card as you need. (Weather effects based on Prism).
 
-## 🤖 How Images Are Generated
+## ✅ What you need
 
-House images are generated in OpenAI/Gemini with prompt:
+**Required**
 
-```text
-I am attaching reference photos of the house and a satellite view from Google Maps. The plot must be drawn isometrically in a video game style (e.g., Sim City or The Sims) but with a modern 2026 aesthetic. Below are the rules that must be strictly followed:
+| Thing | Why |
+|---|---|
+| `weather.*` entity (Met.no, OpenWeatherMap, Google Weather, ...) | Picks the weather variant of the house image, drives the animations and the advisory |
+| `sensor.season` from the **Season** integration | Picks the season variant. English and Polish state names are understood |
+| `sun.sun` | Day / night switch for the image and the night dimming |
+| At least one temperature sensor | The `rooms` list must exist, even with a single entry |
+| The house images (see [Images](#images)) | Without them the card is an empty box |
 
-High resolution.
+**Optional, but each one unlocks something**
 
-Dynamic point lighting.
-
-Depth and strong contrasting shading.
-
-The plot on which the house stands has a bottom layer in a glassmorphism style, and only on top of that is the soil layer depicting the scenery (for winter do not draw grass, only snow; for summer draw a manicured lawn; for spring draw spring grass with a small amount of spring flowers; for autumn, scatter a moderate amount of yellow-orange-brown autumn leaves on the grass).
-
-Solid background #121212, easy to cut out.
-
-Never draw anything outside the plot or on the background.
-
-A delicate shadow of the plot extending slightly beyond it, but very minimal; the same applies to any weather variants—do not go outside the plot boundaries!
-
-No solar panels on the roof.
-
-The car is a black BMW X1, black gloss, light reflections on the car.
-
-The car is facing the entrance gate.
-
-Driveway and back of the house: concrete/pavement/slabs.
-
-Specifications of variants and their rules depending on weather conditions:
-
-Cloudless sky: Plot highly illuminated by golden sun rays.
-
-Partly cloudy.
-
-Overcast and gloomy.
-
-Heavy rain: Draw a downpour in front of the house on the plot - always use light reflections, point lights reflecting on the plot.
-
-Snowing: Draw intense snowfall in front of the house on the plot - always use light reflections, point lights reflecting on the plot.
-
-Thunderstorms: Do not draw lightning bolts, but draw the house strongly overexposed by lightning flashes like in cartoons, low light source, visible tree shadows at a very low angle.
-
-Fog: Draw fog, a delicate cloud, or slight smoke in front of the house and next to the car, but gently, suggesting fog.
-
-Important: If night is generated, always apply a blue-dark navy-grey color variant to the plot suggesting night, turn on lights inside the house, and illuminate the driveway near the thujas where the car is parked.
-
-NOW GENERATING:
-
-Winter, Night, Snowing
-
-
-Additionally:
-
-Draw an igloo on the plot, a snowman draped with colorful fairy lights (light reflections), and Santa Claus sliding down the roof.
-```
+| Entity | Unlocks |
+|---|---|
+| Cloud coverage sensor (0-100 %) | Cloud density. Without it the sky is cloud-free unless the weather state says otherwise |
+| Wind speed + wind bearing sensors | Direction and speed of clouds, rain and snow, and the wind-chill advisory. Falls back to the weather entity's `wind_speed` / `wind_bearing` attributes, then to a fixed westerly breeze |
+| UV index sensor | "UV high" advisory above 6 |
+| PM2.5 / AQI sensor | Air-quality advisories above 50 and 100 |
+| Pollen sensor (text `high` / `very_high` / `extreme` / `red`, or a number above 50) | Pollen advisory |
+| An `input_boolean` for party / gaming mode | The ambient light overlay |
+| `person.*` or any other entity | Image overlays (vehicles on the driveway, lights, decorations) |
 
 ## ✨ Features
 
-* **🧠 AI Smart Advisor:** A "storyteller" logic that analyzes forecast, wind, UV, AQI, and pollen data to provide human-readable, contextual advice (e.g., *"Wind Chill Warning: It's 5°C but feels like -2°C due to strong winds"*).
-* **🌦️ Prism Weather Engine:**
-    * **Rain/Snow:** Elegant, non-intrusive particle animations (Prism Classic style).
-    * **Stars:** Automatically appear at night when the sky is clear.
-    * **Fog:** Organic fog puffs appear during foggy weather or rainy nights.
-    * **Clouds:** Dynamic cloud density based on the `cloud_coverage` entity.
-    * **Wind Physics:** Clouds and rain/snow change direction and speed based on real wind sensor data.
-* **🌗 Day/Night Cycle:** The house image dims automatically at night to match your dashboard's theme.
-* **🎮 Gaming Ambient Mode:** A toggleable immersive mode that overlays soft, floating ambient lights (Magenta/Cyan/Purple) over the house image.
-* **🌡️ Room Badges:** Positionable temperature badges for specific rooms overlaid on your house image.
-* **🌍 Multi-language:** Built-in support for **English** and **Polish** (configurable).
+* **🧠 Smart advisor:** one sentence built from storms, air quality, pollen, rain or snow in the next three forecast slots, current rain or snow, UV, wind chill, cold or heat, in that priority order. Falls back to a "comfortable conditions" line.
+* **🌦️ Prism weather engine:** rain and snow particles, stars on clear nights, fog on foggy weather and on rainy or cloudy nights, clouds scaled by coverage, lightning flashes, all steered by real wind data.
+* **🌗 Day / night:** the house image switches to its night variant and dims slightly after sunset.
+* **🎮 Gaming ambient mode:** a toggleable magenta / cyan / purple light overlay.
+* **🌡️ Room badges:** positionable temperature badges, coloured cold / optimal / warm / hot.
+* **🚗 Overlays:** extra images shown while an entity is in a given state, with weather and day / night variants.
+* **🌍 English and Polish** text.
 
 ## 📥 Installation
 
-### Option 1: HACS (Recommended)
+### HACS (recommended)
 
-1.  Open **HACS** in Home Assistant.
-2.  Go to **Frontend** > **Custom repositories** (top right menu).
-3.  Add the URL of this repository.
-4.  Select category: **Lovelace**.
-5.  Click **Add** and then **Download**.
-6.  Reload your resources/browser.
+1. HACS → **Frontend** → three-dot menu → **Custom repositories**.
+2. Add `https://github.com/muhlman/house_card`, category **Lovelace**, then **Download**.
+3. HACS registers the resource and installs to `config/www/community/house_card/`. Hard-refresh your browser.
 
-### Option 2: Manual
+### Manual
 
-1.  Download `fork-u-house-card.js` from the latest release.
-2.  Upload it to your Home Assistant `config/www/` directory.
-3.  Add the resource in your Dashboard configuration:
-    * URL: `/local/fork-u-house-card.js`
-    * Type: `JavaScript Module`
+1. Copy `fork_u-house_card.js` to `config/www/house_card/fork_u-house_card.js`.
+2. Dashboard → Resources → add `/local/house_card/fork_u-house_card.js` as a **JavaScript module**.
+3. Set `image_path: /local/house_card/images/` in the card config (see below).
 
 ## ⚙️ Configuration
 
-Add the following to your Dashboard YAML configuration.
-
-**Note:** You must upload a photo of your house (preferably with a transparent background or a dark sky) to your `www` folder.
+Every key the card reads is listed here. Anything else in the YAML is ignored.
 
 ```yaml
 type: custom:fork-u-house-card
-title: "My Residence" # Optional title (visual only)
-language: "en"        # Options: 'en', 'pl'
+language: en                      # en (default) or pl
 
-img_winter_day_fog: true    # will look for winter_fog_day.png
-img_winter_night_fog: false # will not look for winter_night_fog.png and fallback to winter_day.png
-# remember to do the same for summer, winter, autumn, spring
+# --- Images ---
+image_path: /local/community/house_card/images/   # default; folder holding the PNGs below
 
-# also please note xmas starts 14 dec to 14 jan
-# remember to provide winter_xmas_day.png i winter_xmas_night.png 
+# Weather variants are opt-in per season / time / weather so you can add images gradually.
+# Key order can be img_{season}_{time}_{weather} or img_{season}_{weather}_{time}.
+img_winter_day_snowy: true        # uses winter_snowy_day.png when it is snowing in winter by day
+img_winter_night_snowy: true      # uses winter_snowy_night.png
+# A missing or false flag falls back to the plain {season}_{time}.png for that weather.
 
-# use test to check animations effects:
-test_weather_state: fog # cloud, lightning, snowy, rainy, ...
+# --- Entities ---
+weather_entity: weather.forecast_home          # required
+season_entity: sensor.season                   # required
+sun_entity: sun.sun                            # default sun.sun
+cloud_coverage_entity: sensor.openweathermap_cloud_coverage
+wind_speed_entity: sensor.wind_speed
+wind_direction_entity: sensor.wind_bearing
+uv_entity: sensor.uv_index
+aqi_entity: sensor.waqi_pm2_5
+pollen_entity: sensor.pollen_level
+party_mode_entity: input_boolean.gaming_mode
 
-# --- Core Entities --- REQUIRED
-weather_entity: weather.forecast_home
-season_entity: sensor.season
-sun_entity: sun.sun
-cloud_coverage_entity: sensor.openweathermap_cloud_coverage # Optional (0-100%)
+# --- Units (normally auto-detected from Home Assistant) ---
+# temperature_unit: "°F"          # or "°C"; include the degree sign
+# wind_speed_unit: mph            # km/h (default), mph, m/s, kn
 
-# --- Feature Switches ---
-party_mode_entity: input_boolean.gaming_mode  # Toggles the "Gaming Ambient" lights
+# --- Sizing ---
+# aspect_ratio: "4:3"             # default; the card sets its height from its width
+# height: 350                     # fixed height in px instead (the original, cropping behaviour)
+# image_fit: contain              # letterbox instead of cover
 
-# --- Environmental Sensors (For AI Logic) ---
-# If you don't have specific sensors, you can leave them empty, 
-# but AI advice will be less detailed.
-aqi_entity: sensor.waqi_pm2_5           # Air Quality (PM2.5)
-pollen_entity: sensor.pollen_level      # Pollen (High/Moderate or number)
-uv_entity: sensor.uv_index              # UV Index
-wind_speed_entity: sensor.wind_speed    # Wind Speed (km/h)
-wind_direction_entity: sensor.wind_bearing # Wind Bearing (degrees)
+# --- Testing ---
+# test_weather_state: snowy       # forces the ANIMATIONS and advisory only; the house image
+                                  # still follows weather_entity. Remove when done.
 
-# --- Rooms Configuration ---
-# Define temperature sensors to display as badges over the house image.
-# x: Horizontal position % (0 = left, 100 = right)
-# y: Vertical position % (0 = top, 100 = bottom)
-# weight: 1 = Include in "Home Average" calculation, 0 = Exclude (e.g. attic/basement)
+# --- Room badges (required, at least one) ---
+# x / y are percentages of the card, 0,0 top-left; the badge is centred on the point.
 rooms:
-  - name: "Living Room"
+  - name: Living Room
     entity: sensor.living_room_temperature
     x: 50
     y: 70
-    weight: 1
-
-  - name: "Bedroom"
-    entity: sensor.bedroom_temperature
-    x: 20
-    y: 30
-    weight: 1
-
-  - name: "Attic"
-    entity: sensor.attic_temperature
+    weight: 1                     # 0 excludes the room from the home median (see note)
+  - name: Outside
+    entity: sensor.outdoor_temperature
     x: 50
-    y: 10
-
+    y: 8
     weight: 0
+
+# --- Overlays (optional) ---
+overlays:
+  - entity: person.one
+    image: vehicle_1_{weather}_{time}.png
+  - entity: person.two
+    image: vehicle_2_{weather}_{time}.png
+    states: [home]                # default "home"; a list is accepted
 ```
 
-## 🌡️ Units, Sizing and Overlays (this fork)
+Notes:
 
-### Units
+* `title` is accepted but not displayed.
+* The home-median pill that `weight` feeds is hidden by the card's CSS, so `weight` has no
+  visible effect unless you re-enable `.median-pill`.
+* Thresholds are defined in °C and km/h. The card reads Home Assistant's unit system and
+  converts automatically, so °F / mph installs classify correctly and the advisory prints the
+  native unit. Use the `*_unit` keys only if a sensor reports in a different unit than Home
+  Assistant's setting.
 
-The card's thresholds (badge colours, cold/heat advisories, wind chill) are defined in °C and km/h.
-This fork reads the unit system from Home Assistant and converts automatically, so imperial
-installs (°F, mph) classify correctly and the advisory text shows the native unit. Override only
-if your sensors report a different unit than Home Assistant's setting:
+### How the house image is chosen
 
-```yaml
-temperature_unit: "°F"   # or "°C" (include the degree sign)
-wind_speed_unit: mph     # or km/h, m/s, kn
-```
+1. **Christmas** - from 14 December to 14 January the image is always `winter_xmas_{day|night}.png`.
+2. **Season** from `season_entity`, **time** from `sun_entity` (`below_horizon` = night).
+3. **Weather** from `weather_entity`, mapped to a filename suffix:
 
-### Sizing
+   | Home Assistant state | Suffix |
+   |---|---|
+   | `lightning`, `lightning-rainy` | `lightning` |
+   | `rainy`, `pouring` | `rainy` |
+   | `snowy`, `snowy-rainy` | `snowy` |
+   | `hail` | `hail` |
+   | `fog` | `fog` |
+   | `sunny`, `clear-night`, `cloudy`, `partlycloudy`, `windy`, `exceptional` | *(none - base image)* |
 
-By default the card now sizes its height from its width so the whole house image is visible at
-any screen size. Options:
-
-```yaml
-aspect_ratio: "4:3"      # default; match your images
-height: 350              # fixed height in px - restores the original (cropped) behaviour
-image_fit: contain       # letterbox instead of cover
-```
+4. If the suffix is set **and** the matching `img_*` flag is `true`, the image is
+   `{season}_{suffix}_{time}.png`; otherwise `{season}_{time}.png`.
 
 ### Overlays
 
-Optional images drawn on top of the house while an entity is in a given state - for example a
-car on the driveway while a person is home. Overlay images must be full-frame PNGs with
-transparency, the same pixel size and camera as the house images, so they stay aligned.
+Overlays are full-frame PNGs with transparency, the **same pixel size and camera as the house
+images**, drawn between the house and the weather effects while their entity is in one of the
+configured states. The example above puts a vehicle on the driveway while a person is home, but
+any entity works: a lit porch while a light is on, a bike while its tracker is home, decorations
+while an `input_boolean` is set.
 
-```yaml
-overlays:
-  - entity: person.mike
-    image: car_mike_{weather}_{time}.png
-  - entity: person.amy
-    image: car_amy_{weather}_{time}.png
-    states: [home]           # default is "home"; a list is accepted
-```
+Filename tokens: `{time}` → `day` / `night`; `{weather}` → the suffix from the table above
+(empty for clear or cloudy); `{season}` → `spring` / `summer` / `autumn` / `winter`. Missing
+variants fall back: the weather token is dropped first, then the season. So on a snowy winter
+night `vehicle_1_{season}_{weather}_{time}.png` tries `vehicle_1_winter_snowy_night.png`,
+`vehicle_1_snowy_night.png`, `vehicle_1_winter_night.png`, `vehicle_1_night.png`. Only the plain
+day and night files are required. Bare filenames resolve against `image_path`; paths starting
+with `/` or `http` are used as-is. Misses are remembered per page load, so reload after adding files.
 
-Filename tokens: `{time}` -> `day`/`night`, `{weather}` -> `rainy`/`snowy`/`fog`/`lightning`/`hail`
-(empty for sunny/cloudy, same mapping as the house image), `{season}` -> `spring`/`summer`/
-`autumn`/`winter`. Missing variants fall back gracefully: the weather token is dropped first, then
-the season, so `car_{season}_{weather}_{time}.png` on a snowy winter night tries
-`car_winter_snowy_night.png`, `car_snowy_night.png`, `car_winter_night.png`, `car_night.png`.
-Only the plain day/night files are required. Bare filenames resolve against `image_path`; paths
-starting with `/` or `http` are used as-is.
+## Images
+
+All images share one frame: same camera, position and scale as the master reference, 4:3
+(the originals are 1448 × 1086), solid dark background for the houses, transparent background
+for overlays. The full set the card can request is **50 files**:
+
+| Category | Count | Files |
+|---|---|---|
+| Base | 8 | `{season}_{day\|night}.png` - also used for cloudy and partly cloudy |
+| Weather | 40 | `{season}_{rainy\|snowy\|fog\|lightning\|hail}_{day\|night}.png` |
+| Christmas | 2 | `winter_xmas_day.png`, `winter_xmas_night.png` |
+
+Every weather image is optional: leave its `img_*` flag off and the base image is used.
+
+Overlay sets are per overlay, with only the plain day and night files required:
+`vehicle_1_day.png`, `vehicle_1_night.png`, plus any of `vehicle_1_{rainy|snowy|fog|lightning|hail}_{day|night}.png`.
+
+> The bundled generator (`image_generation/`, Colab notebook) predates the hail variants and also
+> produces `*_overcast_*` and `gaming_*` files that the card never requests. Add hail prompts if you
+> want them, and ignore the overcast and gaming output.
 
 ## 🖼️ Image Generation Workflow
 
@@ -229,7 +197,7 @@ starting with `/` or `http` are used as-is.
 
 Generate all required house assets for free using Google's cloud infrastructure and the Gemini API. No installation required on your computer.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/silasmariusz/fork_u-house_card/blob/main/colab_generator/generate_house_assets.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/muhlman/house_card/blob/main/colab_generator/generate_house_assets.ipynb)
 
 **Steps:**
 1. Click the **Open in Colab** button above.
@@ -243,20 +211,17 @@ Generate all required house assets for free using Google's cloud infrastructure 
 
 For automated or semi-automated generation using **Gemini 3 Pro** locally, use the `image_generation/` folder and the `generate_house_images.py` script.
 
-### Required Output Files (42 images)
+### Output files
 
-| Category | Count | Examples |
-|---|---|---|
-| Base | 8 | `winter_day.png`, `summer_night.png`, ... |
-| Weather | 32 | `winter_rainy_day.png`, `summer_fog_night.png`, ... |
-| Xmas | 2 | `winter_xmas_day.png`, `winter_xmas_night.png` |
+See [Images](#images) above for the full list of 50 files the card can use. The generator
+covers 42 of them (no hail) and additionally emits overcast and gaming variants the card ignores.
 
 ### Workflow
 
 1. **Reference Images** – Place photos of your house in `image_generation/reference/` (Street View, Satellite).
 2. **Master** – Generate the master reference image (Summer, Day, Sunny) and save as `image_generation/master/_master_reference.png`.
 3. **Variants** – Run the script (`python generate_house_images.py`) or use `--export-prompts` to export prompts for manual use in [Gemini](https://gemini.google.com).
-4. **Results** – Copy `image_generation/output/*.png` to `images/` (or `www/` in Home Assistant).
+4. **Results** – Copy `image_generation/output/*.png` to the folder your `image_path` points at (default `config/www/community/house_card/images/`).
 
 Details: [image_generation/README.md](image_generation/README.md)
 
@@ -294,7 +259,7 @@ Enjoy
 > You don't need to manually create 40+ images! 
 > We have created a **Free AI Tool** that generates all weather, season, and day/night variants for you in minutes.
 > 
-> [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/silasmariusz/fork_u-house_card/blob/main/colab_generator/generate_house_assets.ipynb) <br> *(Click above to start generating for free!)*
+> [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/muhlman/house_card/blob/main/colab_generator/generate_house_assets.ipynb) <br> *(Click above to start generating for free!)*
 >
 > Howto:
 > ![ezgif-84e148d15543d035](https://github.com/user-attachments/assets/97116b93-1bc0-44ff-9ddd-b01cb8389c41)
