@@ -175,6 +175,54 @@ rooms:
     weight: 0
 ```
 
+## 🌡️ Units, Sizing and Overlays (this fork)
+
+### Units
+
+The card's thresholds (badge colours, cold/heat advisories, wind chill) are defined in °C and km/h.
+This fork reads the unit system from Home Assistant and converts automatically, so imperial
+installs (°F, mph) classify correctly and the advisory text shows the native unit. Override only
+if your sensors report a different unit than Home Assistant's setting:
+
+```yaml
+temperature_unit: "°F"   # or "°C" (include the degree sign)
+wind_speed_unit: mph     # or km/h, m/s, kn
+```
+
+### Sizing
+
+By default the card now sizes its height from its width so the whole house image is visible at
+any screen size. Options:
+
+```yaml
+aspect_ratio: "4:3"      # default; match your images
+height: 350              # fixed height in px - restores the original (cropped) behaviour
+image_fit: contain       # letterbox instead of cover
+```
+
+### Overlays
+
+Optional images drawn on top of the house while an entity is in a given state - for example a
+car on the driveway while a person is home. Overlay images must be full-frame PNGs with
+transparency, the same pixel size and camera as the house images, so they stay aligned.
+
+```yaml
+overlays:
+  - entity: person.mike
+    image: car_mike_{weather}_{time}.png
+  - entity: person.amy
+    image: car_amy_{weather}_{time}.png
+    states: [home]           # default is "home"; a list is accepted
+```
+
+Filename tokens: `{time}` -> `day`/`night`, `{weather}` -> `rainy`/`snowy`/`fog`/`lightning`/`hail`
+(empty for sunny/cloudy, same mapping as the house image), `{season}` -> `spring`/`summer`/
+`autumn`/`winter`. Missing variants fall back gracefully: the weather token is dropped first, then
+the season, so `car_{season}_{weather}_{time}.png` on a snowy winter night tries
+`car_winter_snowy_night.png`, `car_snowy_night.png`, `car_winter_night.png`, `car_night.png`.
+Only the plain day/night files are required. Bare filenames resolve against `image_path`; paths
+starting with `/` or `http` are used as-is.
+
 ## 🖼️ Image Generation Workflow
 
 ### 🚀 Easy Generation with Google Colab (Recommended)

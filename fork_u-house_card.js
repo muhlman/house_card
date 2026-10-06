@@ -39,11 +39,11 @@ const TRANSLATIONS = {
         alert_uv_high: "☀️ HIGH UV RADIATION: The UV Index is {val}. Unprotected skin can burn quickly. Use sunscreen and wear sunglasses if you go out.",
         
         // 6. TEMPERATURE + WIND (Wind Chill)
-        advice_cold_wind: "🥶 WIND CHILL WARNING: It's {val}°C, but the strong wind makes it feel much colder. Wear windproof layers and a hat.",
-        advice_cold: "🧣 COLD WEATHER: Outside temperature is {val}°C. It's chilly—make sure to zip up your jacket and keep warm.",
+        advice_cold_wind: "🥶 WIND CHILL WARNING: It's {val}{unit}, but the strong wind makes it feel much colder. Wear windproof layers and a hat.",
+        advice_cold: "🧣 COLD WEATHER: Outside temperature is {val}{unit}. It's chilly—make sure to zip up your jacket and keep warm.",
         
-        advice_hot: "🔥 HEAT ADVISORY: Temperatures have reached {val}°C. Avoid strenuous activity in direct sunlight and drink plenty of water.",
-        advice_nice: "😎 COMFORTABLE CONDITIONS: Weather is stable at {val}°C with moderate wind. Great time for a walk or airing out the house.",
+        advice_hot: "🔥 HEAT ADVISORY: Temperatures have reached {val}{unit}. Avoid strenuous activity in direct sunlight and drink plenty of water.",
+        advice_nice: "😎 COMFORTABLE CONDITIONS: Weather is stable at {val}{unit} with moderate wind. Great time for a walk or airing out the house.",
         
         advice_gaming: "🎮 GAMING MODE: Immersive lighting active. Notifications silenced.",
     },
@@ -79,11 +79,11 @@ const TRANSLATIONS = {
         alert_uv_high: "<span class='value-pill pill-1'>☀️ <b>PROMIENIOWANIE</b></span>  Indeks UV wynosi <span class='value-pill'><b>{val}</b></span>. Skóra może ulec poparzeniu. Koniecznie użyj kremu z filtrem i okularów przeciwsłonecznych.",
         
         // 6. TEMPERATURA + WIATR
-        advice_cold_wind: "<span class='value-pill pill-1'>🥶 <b>WIATR</b></span>  Jest <span class='value-pill'><b>{val}</b> °C</span>, ale silny wiatr sprawia, że temperatura odczuwalna jest znacznie niższa. Ubierz się „na cebulkę” i chroń uszy.",
-        advice_cold: "<span class='value-pill pill-1'>🧣 <b>ZIMNO</b></span>  Temperatura wynosi <span class='value-pill'><b>{val}</b> °C</span>. Ubierz ciepłą kurtkę przed wyjściem. Warto sprawdzić szczelność okien.",
+        advice_cold_wind: "<span class='value-pill pill-1'>🥶 <b>WIATR</b></span>  Jest <span class='value-pill'><b>{val}</b> {unit}</span>, ale silny wiatr sprawia, że temperatura odczuwalna jest znacznie niższa. Ubierz się „na cebulkę” i chroń uszy.",
+        advice_cold: "<span class='value-pill pill-1'>🧣 <b>ZIMNO</b></span>  Temperatura wynosi <span class='value-pill'><b>{val}</b> {unit}</span>. Ubierz ciepłą kurtkę przed wyjściem. Warto sprawdzić szczelność okien.",
         
-        advice_hot: "<span class='value-pill pill-1'>🔥 <b>GORĄC</b></span>  Temperatura osiągnęła <span class='value-pill'><b>{val}</b> °C</span>. Unikaj słońca w godzinach szczytu, pij dużo wody i zasłoń rolety.",
-        advice_nice: "😎 Pogoda jest stabilna, temperatura przyjemna <span class='value-pill'><b>{val}</b> °C</span>. To <span class='value-pill'>idealny</span> moment na spacer lub przewietrzenie mieszkania.",
+        advice_hot: "<span class='value-pill pill-1'>🔥 <b>GORĄC</b></span>  Temperatura osiągnęła <span class='value-pill'><b>{val}</b> {unit}</span>. Unikaj słońca w godzinach szczytu, pij dużo wody i zasłoń rolety.",
+        advice_nice: "😎 Pogoda jest stabilna, temperatura przyjemna <span class='value-pill'><b>{val}</b> {unit}</span>. To <span class='value-pill'>idealny</span> moment na spacer lub przewietrzenie mieszkania.",
         
         advice_gaming: "<span class='value-pill pill-1'>🎮 <b>TRYB IMERSYJNY</b></span>  Tryb kina lub gry aktywny. Sterowanie <span class='value-pill'><b>AmbiLight</b></span> włączone.",
     }
@@ -148,11 +148,26 @@ class ForkUHouseCard extends HTMLElement {
     }
 
     _t(key, repl = {}) {
+        repl = { unit: this._tempUnit(), ...repl };
         let txt = TRANSLATIONS[this._lang]?.[key] || TRANSLATIONS['en'][key] || key;
         Object.keys(repl).forEach(k => { txt = txt.replace(`{${k}}`, repl[k]); });
         return txt;
     }
   
+    // Unit handling: thresholds in this card are Celsius / km/h; HA may be imperial.
+    _tempUnit() {
+        return this._config.temperature_unit || this._hass?.config?.unit_system?.temperature || '°C';
+    }
+    _isFahrenheit() { return this._tempUnit() === '°F'; }
+    _toC(v) { return this._isFahrenheit() ? (v - 32) * 5 / 9 : v; }
+    _toKmh(v) {
+        const u = this._config.wind_speed_unit || this._hass?.config?.unit_system?.wind_speed || 'km/h';
+        if (u === 'mph') return v * 1.609344;
+        if (u === 'm/s') return v * 3.6;
+        if (u === 'kn') return v * 1.852;
+        return v;
+    }
+
     connectedCallback() {
       if (this.shadowRoot && !this._resizeObserver) {
           const card = this.shadowRoot.querySelector('.card');
@@ -169,12 +184,82 @@ class ForkUHouseCard extends HTMLElement {
     }
 
      // --- NOWA LOGIKA WYBORU OBRAZKA ---
+    _timeOfDay() {
+        const sunState = this._hass.states[this._config.sun_entity || 'sun.sun']?.state || 'above_horizon';
+        return sunState === 'below_horizon' ? 'night' : 'day';
+    }
+
+    _season() {
+        let season = this._hass.states[this._config.season_entity]?.state || 'summer';
+        const seasonMap = { 'wiosna': 'spring', 'lato': 'summer', 'jesień': 'autumn', 'zima': 'winter' };
+        if (seasonMap[season]) season = seasonMap[season];
+        return season.toLowerCase();
+    }
+
+    // HA weather state -> filename suffix; null for sunny/cloudy/partlycloudy (no weather image).
+    _weatherSuffix() {
+        const wStateRaw = this._hass.states[this._config.weather_entity]?.state;
+        if (!wStateRaw) return null;
+        const s = wStateRaw.toLowerCase();
+        if (['lightning', 'lightning-rainy'].includes(s)) return 'lightning';
+        if (['rainy', 'pouring'].includes(s)) return 'rainy';
+        if (['snowy', 'snowy-rainy'].includes(s)) return 'snowy';
+        if (s === 'hail') return 'hail';
+        if (s === 'fog') return 'fog';
+        return null;
+    }
+
+    _imagePath() {
+        return this._config.image_path || "/local/community/fork_u-house_card/images/";
+    }
+
+    // Overlay image candidates, most specific first. Tokens: {time} day|night, {season},
+    // {weather} (rainy|snowy|fog|lightning|hail, same mapping as the house image).
+    // Each fallback drops a token together with its joining underscore, e.g.
+    // car_{season}_{weather}_{time}.png -> car_winter_snowy_night.png, car_winter_night.png,
+    // car_snowy_night.png, car_night.png. Missing files are skipped at load time.
+    _overlayCandidates(name) {
+        const time = this._timeOfDay(), season = this._season(), weather = this._weatherSuffix();
+        const strip = (str, tok) => str.replace(new RegExp(`_?\\{${tok}\\}_?`, 'g'), m =>
+            (m.startsWith('_') && m.endsWith('_')) ? '_' : '');
+        let variants = [String(name)];
+        const expand = (tok, val) => {
+            const out = [];
+            variants.forEach(v => {
+                if (!v.includes(`{${tok}}`)) { out.push(v); return; }
+                if (val) out.push(v.split(`{${tok}}`).join(val));
+                out.push(strip(v, tok));
+            });
+            variants = out;
+        };
+        expand('weather', weather);
+        expand('season', season);
+        variants = variants.map(v => v.split('{time}').join(time));
+        const seen = new Set();
+        return variants.filter(v => !seen.has(v) && seen.add(v))
+            .map(f => /^(\/|https?:)/.test(f) ? f : `${this._imagePath()}${f}`);
+    }
+
+    // Load the first candidate that exists; remembers misses so they are not re-probed.
+    _loadFirstAvailable(candidates, onDone) {
+        if (!this._missingImages) this._missingImages = new Set();
+        const next = (i) => {
+            if (i >= candidates.length) { onDone(null); return; }
+            const url = candidates[i];
+            if (this._missingImages.has(url)) { next(i + 1); return; }
+            const img = new Image();
+            img.onload = () => onDone(url);
+            img.onerror = () => { this._missingImages.add(url); next(i + 1); };
+            img.src = url;
+        };
+        next(0);
+    }
+
     _calculateImage() {
-        const path = this._config.image_path || "/local/community/fork_u-house_card/images/";
+        const path = this._imagePath();
         
         // 1. Pora Dnia
-        const sunState = this._hass.states[this._config.sun_entity || 'sun.sun']?.state || 'above_horizon';
-        const timeOfDay = sunState === 'below_horizon' ? 'night' : 'day';
+        const timeOfDay = this._timeOfDay();
 
         // 2. Święta (Xmas Priority)
         const now = new Date();
@@ -185,32 +270,10 @@ class ForkUHouseCard extends HTMLElement {
         }
 
         // 3. Sezon
-        let season = this._hass.states[this._config.season_entity]?.state || 'summer';
-        const seasonMap = { 'wiosna': 'spring', 'lato': 'summer', 'jesień': 'autumn', 'zima': 'winter' };
-        if (seasonMap[season]) season = seasonMap[season];
-        season = season.toLowerCase();
+        const season = this._season();
 
         // 4. Ścisłe Mapowanie Pogody (Strict Mapping)
-        const wStateRaw = this._hass.states[this._config.weather_entity]?.state;
-        let weatherSuffix = null;
-
-        if (wStateRaw) {
-            const s = wStateRaw.toLowerCase();
-            
-            // Tłumaczenie stanów HA na Twoje nazwy plików
-            if (['lightning', 'lightning-rainy'].includes(s)) {
-                weatherSuffix = 'lightning';
-            } else if (['rainy', 'pouring'].includes(s)) {
-                weatherSuffix = 'rainy';
-            } else if (['snowy', 'snowy-rainy'].includes(s)) {
-                weatherSuffix = 'snowy';
-            } else if (s === 'hail') {
-                weatherSuffix = 'hail';
-            } else if (s === 'fog') {
-                weatherSuffix = 'fog';
-            }
-            // Sunny, cloudy, partlycloudy -> weatherSuffix pozostaje null (czyli fallback do season_day.png)
-        }
+        const weatherSuffix = this._weatherSuffix();
 
         // 5. Sprawdzenie Boolean w Configu
         if (weatherSuffix) {
@@ -246,6 +309,8 @@ class ForkUHouseCard extends HTMLElement {
           }
       }
 
+      this._updateOverlays();
+
       // Rooms & Median
       const roomsData = this._config.rooms.map(r => {
         const s = this._hass.states[r.entity];
@@ -273,6 +338,44 @@ class ForkUHouseCard extends HTMLElement {
       }
     }
   
+    // Optional overlays (e.g. a car per person): shown while the entity is in one of the
+    // configured states (default: "home"). Images are full-frame PNGs sized like the house.
+    _updateOverlays() {
+      const layer = this.shadowRoot.querySelector('.overlay-layer');
+      if (!layer) return;
+      const overlays = Array.isArray(this._config.overlays) ? this._config.overlays : [];
+      if (!this._overlayEls) this._overlayEls = [];
+      overlays.forEach((ov, i) => {
+          let el = this._overlayEls[i];
+          if (!el) {
+              el = document.createElement('div');
+              el.className = 'overlay-image';
+              layer.appendChild(el);
+              this._overlayEls[i] = el;
+          }
+          const want = ov.states || ov.state || 'home';
+          const wanted = Array.isArray(want) ? want : [want];
+          const state = ov.entity ? this._hass.states[ov.entity]?.state : undefined;
+          const visible = ov.entity ? wanted.includes(state) : true;
+          const candidates = ov.image ? this._overlayCandidates(ov.image) : [];
+          const key = candidates.join('|');
+          if (candidates.length && el.dataset.key !== key) {
+              el.dataset.key = key;
+              this._loadFirstAvailable(candidates, (url) => {
+                  if (el.dataset.key !== key) return;   // superseded by a newer state
+                  el.dataset.src = url || '';
+                  el.style.backgroundImage = url ? `url('${url}')` : 'none';
+                  el.style.opacity = (el.dataset.visible === '1' && url) ? '1' : '0';
+              });
+          }
+          el.dataset.visible = visible ? '1' : '0';
+          el.style.opacity = (visible && el.dataset.src) ? '1' : '0';
+      });
+      // Drop elements for overlays removed from config
+      for (let i = overlays.length; i < this._overlayEls.length; i++) this._overlayEls[i].remove();
+      this._overlayEls.length = overlays.length;
+    }
+
     _updateBadges(rooms) {
       const container = this.shadowRoot.querySelector('.badges-layer');
       if (!container) return;
@@ -292,6 +395,7 @@ class ForkUHouseCard extends HTMLElement {
     }
     
     _getTempColorClass(t) {
+      t = this._toC(t);
       if (t < 19) return 'is-cold'; if (t < 23) return 'is-optimal'; if (t < 25) return 'is-warm'; return 'is-hot';
     }
 
@@ -320,6 +424,7 @@ class ForkUHouseCard extends HTMLElement {
 
         const condition = this._config.test_weather_state || wObj.state;
         const temp = wObj.attributes.temperature;
+        const tempC = this._toC(temp);
         const forecast = wObj.attributes.forecast || [];
         
         // Sensory
@@ -394,13 +499,13 @@ class ForkUHouseCard extends HTMLElement {
                 level = "warn";
             }
             // 7. TEMPERATURA + WIATR (ZIMA)
-            else if (temp < 10 && windSpeed > 20) {
+            else if (tempC < 10 && windSpeed > 20) {
                 // Jest zimno i wieje - Wind Chill
                 msg = this._t('advice_cold_wind', {val: temp});
             }
-            else if (temp < 5) {
+            else if (tempC < 5) {
                 msg = this._t('advice_cold', {val: temp});
-            } else if (temp > 28) {
+            } else if (tempC > 28) {
                 msg = this._t('advice_hot', {val: temp}); 
                 level = "warn";
             } 
@@ -419,7 +524,7 @@ class ForkUHouseCard extends HTMLElement {
         const statusEl = this.shadowRoot.querySelector('.footer-content');
         const footer = this.shadowRoot.querySelector('.footer');
 
-        if (medianEl) medianEl.innerHTML = `${this._t('home_median')}: <b>${median.toFixed(1)}°C</b>`;
+        if (medianEl) medianEl.innerHTML = `${this._t('home_median')}: <b>${median.toFixed(1)}${this._tempUnit()}</b>`;
         if (statusEl) statusEl.innerHTML = msg;
         if (footer) footer.setAttribute('data-status', level);
     }
@@ -442,7 +547,8 @@ class ForkUHouseCard extends HTMLElement {
         else if(this._hass.states[this._config.weather_entity]?.attributes?.wind_bearing) 
             bearing = parseFloat(this._hass.states[this._config.weather_entity].attributes.wind_bearing);
             
-        return { speed: isNaN(speed)?5:speed, bearing: isNaN(bearing)?270:bearing };
+        speed = isNaN(speed) ? 5 : this._toKmh(speed);
+        return { speed, bearing: isNaN(bearing)?270:bearing };
     }
 
     _getCloudCoverage() {
@@ -455,12 +561,23 @@ class ForkUHouseCard extends HTMLElement {
     }
 
     // --- RENDER (Prism Classic + Gaming Ambient) ---
+    // Sizing: default follows the image's aspect ratio (no cropping).
+    // `height: 350` in the card config restores the original fixed-height behaviour.
+    _sizeCss() {
+        const h = parseInt(this._config.height, 10);
+        if (!isNaN(h) && h > 0) return `height: ${h}px;`;
+        const ratio = String(this._config.aspect_ratio || '4:3').replace(':', ' / ');
+        return `height: auto; aspect-ratio: ${ratio};`;
+    }
+
     _render() {
+      const sizeCss = this._sizeCss();
+      const imageFit = this._config.image_fit === 'contain' ? 'contain' : 'cover';
       this.shadowRoot.innerHTML = `
         <style>
           :host { display: block; --fork-u-bg: #1e2024; --color-cold: #60A5FA; --color-opt: #34D399; --color-warm: #FBBF24; --color-hot: #F87171; }
           .card {
-              position: relative; display: flex; flex-direction: column; width: 100%; height: 350px;
+              position: relative; display: flex; flex-direction: column; width: 100%; ${sizeCss}
               overflow: hidden;
               text-shadow: rgba(0,0,0,0.4) 0 1px 0px;
               box-shadow: 0 4px 2px rgba(0,0,0,0.3);
@@ -474,6 +591,12 @@ class ForkUHouseCard extends HTMLElement {
               background: var(--card-background-color,var(--fork-u-bg));
               border-radius: var(--ha-card-border-radius,var(--ha-border-radius-lg,20px));
           }
+          .overlay-layer, .overlay-image {
+              position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+              background-size: ${imageFit}; background-position: center; background-repeat: no-repeat;
+              z-index: 0; pointer-events: none;
+          }
+          .overlay-image { opacity: 0; transition: opacity 1s ease; }
           .gradient-layer {
               background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 40px);
               position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -482,7 +605,7 @@ class ForkUHouseCard extends HTMLElement {
           }
           .bg-image {
               position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-              background-size: cover; background-position: center;
+              background-size: ${imageFit}; background-position: center;
               z-index: 0; transition: all 0.5s ease;
           }
           .dim-layer {
@@ -588,6 +711,7 @@ class ForkUHouseCard extends HTMLElement {
         </style>
         <div class="card">
           <div class="bg-image"></div>
+          <div class="overlay-layer"></div>
           <div class="gradient-layer"></div>
           <div class="dim-layer"></div>
           <div class="ambient-layer">
@@ -603,6 +727,7 @@ class ForkUHouseCard extends HTMLElement {
           </div>
         </div>
       `;
+      this._overlayEls = [];
       this._canvas = this.shadowRoot.getElementById('weatherCanvas');
       this._ctx = this._canvas.getContext('2d');
       setTimeout(() => this._resizeCanvas(), 100);
