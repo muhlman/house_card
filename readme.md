@@ -2,8 +2,8 @@
 
 > This is a fork of [silasmariusz/fork_u-house_card](https://github.com/silasmariusz/fork_u-house_card).
 > It adds unit awareness (°F / mph installs), aspect-ratio sizing so the house is never cropped,
-> entity-driven image overlays (e.g. a vehicle on the driveway while someone is home), and a
-> readme that matches what the card actually does. All credit for the card itself goes upstream.
+> and entity-driven image overlays (e.g. a vehicle on the driveway while someone is home).
+> All credit for the card itself goes upstream.
 
 ![msedge_bNu5APEUJq](https://github.com/user-attachments/assets/8405dc20-4e71-4588-a56a-044292b8ab87)
 
