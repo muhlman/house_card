@@ -72,11 +72,11 @@ language: en                      # en (default) or pl
 # --- Images ---
 image_path: /local/community/house_card/images/   # default; folder holding the PNGs below
 
-# Weather variants are opt-in per season / time / weather so you can add images gradually.
-# Key order can be img_{season}_{time}_{weather} or img_{season}_{weather}_{time}.
-img_winter_day_snowy: true        # uses winter_snowy_day.png when it is snowing in winter by day
-img_winter_night_snowy: true      # uses winter_snowy_night.png
-# A missing or false flag falls back to the plain {season}_{time}.png for that weather.
+# Weather variants are used automatically whenever the file exists, so just add images.
+# To stop one from showing, turn it off (key order can be img_{season}_{time}_{weather}
+# or img_{season}_{weather}_{time}):
+# img_winter_night_hail: false     # never show winter_hail_night.png
+# auto_weather_images: false       # upstream behaviour: only images with an explicit true are used
 
 # --- Entities ---
 weather_entity: weather.forecast_home          # required
@@ -151,8 +151,11 @@ Notes:
    | `fog` | `fog` |
    | `sunny`, `clear-night`, `cloudy`, `partlycloudy`, `windy`, `exceptional` | *(none - base image)* |
 
-4. If the suffix is set **and** the matching `img_*` flag is `true`, the image is
-   `{season}_{suffix}_{time}.png`; otherwise `{season}_{time}.png`.
+4. If the suffix is set, the card tries `{season}_{suffix}_{time}.png` and shows it when the file
+   exists, otherwise `{season}_{time}.png`. Setting `img_{season}_{time}_{suffix}: false` skips
+   the weather image for that combination; `auto_weather_images: false` switches to the
+   upstream opt-in behaviour where only flags set to `true` are used. Existence is checked by
+   loading the image, and misses are remembered per page load, so reload after adding files.
 
 ### Overlays
 
@@ -182,7 +185,8 @@ for overlays. The full set the card can request is **50 files**:
 | Weather | 40 | `{season}_{rainy\|snowy\|fog\|lightning\|hail}_{day\|night}.png` |
 | Christmas | 2 | `winter_xmas_day.png`, `winter_xmas_night.png` |
 
-Every weather image is optional: leave its `img_*` flag off and the base image is used.
+Every weather image is optional: if a file is missing the base image is used, and any one can be
+switched off with its `img_*: false` flag.
 
 Overlay sets are per overlay, with only the plain day and night files required:
 `vehicle_1_day.png`, `vehicle_1_night.png`, plus any of `vehicle_1_{rainy|snowy|fog|lightning|hail}_{day|night}.png`.

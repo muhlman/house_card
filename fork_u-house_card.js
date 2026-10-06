@@ -255,6 +255,7 @@ class ForkUHouseCard extends HTMLElement {
         next(0);
     }
 
+    // Returns house image candidates, most specific first; the first that exists is shown.
     _calculateImage() {
         const path = this._imagePath();
         
@@ -266,7 +267,7 @@ class ForkUHouseCard extends HTMLElement {
         const month = now.getMonth() + 1;
         const day = now.getDate();
         if ((month === 12 && day >= 14) || (month === 1 && day <= 14)) {
-            return `${path}winter_xmas_${timeOfDay}.png`;
+            return [`${path}winter_xmas_${timeOfDay}.png`];
         }
 
         // 3. Sezon
@@ -275,20 +276,16 @@ class ForkUHouseCard extends HTMLElement {
         // 4. Ścisłe Mapowanie Pogody (Strict Mapping)
         const weatherSuffix = this._weatherSuffix();
 
-        // 5. Sprawdzenie Boolean w Configu
-        if (weatherSuffix) {
-            // Klucz np.: img_winter_day_rainy
-            const configKey     = `img_${season}_${timeOfDay}_${weatherSuffix}`;
-            const configKey_alt = `img_${season}_${weatherSuffix}_${timeOfDay}`;
-            
-            // Jeśli w YAML jest: img_winter_day_rainy: true
-            if (this._config[configKey] === true || this._config[configKey_alt] === true) {
-                return `${path}${season}_${weatherSuffix}_${timeOfDay}.png`;
-            }
-        }
-
-        // 6. Fallback (Neutralny)
-        return `${path}${season}_${timeOfDay}.png`;
+        // 5. Weather image: used when the file exists, unless disabled for this combination.
+        //    img_{season}_{time}_{weather}: false (either key order) turns one image off;
+        //    auto_weather_images: false restores opt-in behaviour (only explicit true is used).
+        const base = `${path}${season}_${timeOfDay}.png`;
+        if (!weatherSuffix) return [base];
+        const flag = this._config[`img_${season}_${timeOfDay}_${weatherSuffix}`]
+                  ?? this._config[`img_${season}_${weatherSuffix}_${timeOfDay}`];
+        if (flag === false) return [base];
+        if (flag !== true && this._config.auto_weather_images === false) return [base];
+        return [`${path}${season}_${weatherSuffix}_${timeOfDay}.png`, base];
     }
 
     // --- DATA LOGIC ---
@@ -296,16 +293,18 @@ class ForkUHouseCard extends HTMLElement {
       if (!this._hass || !this.shadowRoot.querySelector('.card')) return;
 
       // --- AKTUALIZACJA TŁA (DYNAMICZNA) ---
-      const newImage = this._calculateImage();
-      // Sprawdzamy czy obrazek się zmienił, żeby nie mrugało
-      if (this._currentImageUrl !== newImage) {
-          this._currentImageUrl = newImage;
+      const candidates = this._calculateImage();
+      const key = candidates.join('|');
+      // Only re-resolve when the wanted set changes, so the image does not flicker
+      if (this._currentImageKey !== key) {
+          this._currentImageKey = key;
           const bgEl = this.shadowRoot.querySelector('.bg-image');
           if (bgEl) {
-              // Preload obrazka
-              const img = new Image();
-              img.onload = () => { bgEl.style.backgroundImage = `url('${newImage}')`; };
-              img.src = newImage;
+              this._loadFirstAvailable(candidates, (url) => {
+                  if (this._currentImageKey !== key || !url) return;
+                  this._currentImageUrl = url;
+                  bgEl.style.backgroundImage = `url('${url}')`;
+              });
           }
       }
 
