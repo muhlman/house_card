@@ -124,6 +124,16 @@ overlays:
   - entity: person.two
     image: vehicle_2_{weather}_{time}.png
     states: [home]                # default "home"; a list is accepted
+
+# --- Events (optional): swap the whole house image for a holiday or party ---
+events:
+  - name: 4th of July
+    from: "07-04"                 # MM-DD; add `to:` for a range, windows may wrap the year end
+    image: event_july4_{time}.png
+  - name: Birthday
+    entity: input_boolean.birthday_party   # active while the entity is "on" (or in `states:`)
+    image: event_birthday_{season}_{time}.png
+# xmas: false                     # disable the built-in 14 Dec - 14 Jan Christmas image
 ```
 
 Notes:
@@ -138,9 +148,13 @@ Notes:
 
 ### How the house image is chosen
 
-1. **Christmas** - from 14 December to 14 January the image is always `winter_xmas_{day|night}.png`.
-2. **Season** from `season_entity`, **time** from `sun_entity` (`below_horizon` = night).
-3. **Weather** from `weather_entity`, mapped to a filename suffix:
+1. **Events** - the first entry in `events:` whose entity is in one of its states (default `on`), or
+   whose `from` / `to` date window contains today, wins. Its `image` takes the same tokens and
+   fallback as overlays; if none of its files exist the normal image is used.
+2. **Christmas** - from 14 December to 14 January the image is `winter_xmas_{day|night}.png`
+   unless `xmas: false`.
+3. **Season** from `season_entity`, **time** from `sun_entity` (`below_horizon` = night).
+4. **Weather** from `weather_entity`, mapped to a filename suffix:
 
    | Home Assistant state | Suffix |
    |---|---|
@@ -152,7 +166,7 @@ Notes:
    | `cloudy`, `partlycloudy` | `overcast` |
    | `sunny`, `clear-night`, `windy`, `exceptional` | *(none - base image)* |
 
-4. If the suffix is set, the card tries `{season}_{suffix}_{time}.png` and shows it when the file
+5. If the suffix is set, the card tries `{season}_{suffix}_{time}.png` and shows it when the file
    exists, otherwise `{season}_{time}.png`. Setting `img_{season}_{time}_{suffix}: false` skips
    the weather image for that combination; `auto_weather_images: false` switches to the
    upstream opt-in behaviour where only flags set to `true` are used. Existence is checked by
@@ -189,11 +203,17 @@ for overlays. The full set the card can request is **58 files**:
 Every weather image is optional: if a file is missing the base image is used, and any one can be
 switched off with its `img_*: false` flag.
 
+Event images are full house renders named `event_{name}_{day|night}.png`, or
+`event_{name}_{season}_{day|night}.png` for events that can fall in any season (birthdays). The
+notebook can generate: july4, birthday, halloween, thanksgiving, new_year, easter, valentines,
+st_patricks, graduation, game_day.
+
 Overlay sets are per overlay, with only the plain day and night files required:
 `vehicle_1_day.png`, `vehicle_1_night.png`, plus any of `vehicle_1_{overcast|rainy|snowy|fog|lightning|hail}_{day|night}.png`.
 
-> The Colab notebook below generates this whole set (optionally skipping summer snow and winter hail)
-> plus the vehicle overlays. The older local script in `image_generation/` has not been updated for
+> The Colab notebook below generates this set (summer snow and winter hail are off by default, since
+> they do not happen; a toggle adds them), the Christmas pair, optional event images, optional vehicle
+> overlays, and the upstream gaming images if you want them. The older local script in `image_generation/` has not been updated for
 > hail, the overcast mapping or overlays.
 
 ## 🖼️ Image Generation Workflow

@@ -258,6 +258,29 @@ class ForkUHouseCard extends HTMLElement {
         next(0);
     }
 
+    // Date window test on MM-DD strings; a window may wrap the year end (12-14 .. 01-14).
+    _inDateWindow(from, to) {
+        const now = new Date();
+        const today = (now.getMonth() + 1) * 100 + now.getDate();
+        const parse = (v) => { const m = String(v || '').match(/^(\d{1,2})-(\d{1,2})$/); return m ? parseInt(m[1], 10) * 100 + parseInt(m[2], 10) : null; };
+        const a = parse(from), b = parse(to ?? from);
+        if (a === null || b === null) return false;
+        return a <= b ? (today >= a && today <= b) : (today >= a || today <= b);
+    }
+
+    // First event whose entity is in one of its states, or whose date window contains today.
+    _activeEvent() {
+        const events = Array.isArray(this._config.events) ? this._config.events : [];
+        return events.find(ev => {
+            if (ev.entity) {
+                const want = ev.states || ev.state || 'on';
+                const wanted = Array.isArray(want) ? want : [want];
+                if (wanted.includes(this._hass.states[ev.entity]?.state)) return true;
+            }
+            return ev.from ? this._inDateWindow(ev.from, ev.to) : false;
+        }) || null;
+    }
+
     // Returns house image candidates, most specific first; the first that exists is shown.
     _calculateImage() {
         const path = this._imagePath();
@@ -265,11 +288,16 @@ class ForkUHouseCard extends HTMLElement {
         // 1. Pora Dnia
         const timeOfDay = this._timeOfDay();
 
-        // 2. Święta (Xmas Priority)
-        const now = new Date();
-        const month = now.getMonth() + 1;
-        const day = now.getDate();
-        if ((month === 12 && day >= 14) || (month === 1 && day <= 14)) {
+        // 2. Events (config `events:`) take priority: an entity state or a date window
+        //    swaps the whole house image, e.g. 4th of July or a birthday.
+        const event = this._activeEvent();
+        if (event && event.image) {
+            const candidates = this._overlayCandidates(event.image);
+            return [...candidates, `${path}${this._season()}_${timeOfDay}.png`];
+        }
+
+        // 3. Christmas (built in; `xmas: false` disables it)
+        if (this._config.xmas !== false && this._inDateWindow('12-14', '01-14')) {
             return [`${path}winter_xmas_${timeOfDay}.png`];
         }
 
