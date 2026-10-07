@@ -235,8 +235,10 @@ The free tier is enough for the whole image set; keep the key private and never 
    describe up to two vehicles, each with its own parking spot (e.g. left vs right garage door) so
    both can show at once. With vehicles set, the houses are generated with an empty driveway.
 3. Upload photos of your house in step 2 and generate the master in step 4. Re-run until it looks right.
-4. Run the remaining steps. Every output is resized to the master's size, overlays are keyed to
-   transparency, and step 8 shows thumbnails with the overlays composited on the house for checking.
+4. Run the remaining steps. Every output is resized to the master's size. Vehicles are added to
+   your finished summer day and night images as local edits and cut out by difference, so they sit
+   in the right place at the right scale; an optional per-vehicle region limits where changes are
+   kept. Step 8 shows thumbnails with the overlays composited on the house for checking.
 5. Download the zip in step 9 and copy its contents into your `image_path` folder.
 
 ---
