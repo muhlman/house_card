@@ -385,13 +385,24 @@ class ForkUHouseCard extends HTMLElement {
       const overlays = Array.isArray(this._config.overlays) ? this._config.overlays : [];
       if (!this._overlayEls) this._overlayEls = [];
       overlays.forEach((ov, i) => {
+          // Positioned sprite (x/y given) or full-frame image (default)
+          const positioned = ov.x !== undefined && ov.y !== undefined;
           let el = this._overlayEls[i];
+          if (el && el.dataset.mode !== (positioned ? 'sprite' : 'frame')) { el.remove(); el = null; }
           if (!el) {
-              el = document.createElement('div');
-              el.className = 'overlay-image';
+              el = document.createElement(positioned ? 'img' : 'div');
+              el.className = positioned ? 'overlay-sprite' : 'overlay-image';
+              el.dataset.mode = positioned ? 'sprite' : 'frame';
               layer.appendChild(el);
               this._overlayEls[i] = el;
           }
+          if (positioned) {
+              const x = parseFloat(ov.x), y = parseFloat(ov.y);
+              el.style.left = `${x}%`; el.style.top = `${y}%`;
+              el.style.width = `${parseFloat(ov.width ?? 20)}%`;
+          }
+          // Stacking: explicit z, else objects lower on screen draw in front (isometric), else list order
+          el.style.zIndex = String(ov.z !== undefined ? parseInt(ov.z, 10) : (positioned ? Math.round(parseFloat(ov.y)) : i));
           const visible = this._isActive(ov, true);
           const candidates = ov.image ? this._overlayCandidates(ov.image) : [];
           const key = candidates.join('|');
@@ -400,7 +411,8 @@ class ForkUHouseCard extends HTMLElement {
               this._loadFirstAvailable(candidates, (url) => {
                   if (el.dataset.key !== key) return;   // superseded by a newer state
                   el.dataset.src = url || '';
-                  el.style.backgroundImage = url ? `url('${url}')` : 'none';
+                  if (el.dataset.mode === 'sprite') el.src = url || '';
+                  else el.style.backgroundImage = url ? `url('${url}')` : 'none';
                   el.style.opacity = (el.dataset.visible === '1' && url) ? '1' : '0';
               });
           }
@@ -633,6 +645,10 @@ class ForkUHouseCard extends HTMLElement {
               z-index: 0; pointer-events: none;
           }
           .overlay-image { opacity: 0; transition: opacity 1s ease; }
+          .overlay-sprite {
+              position: absolute; height: auto; transform: translate(-50%, -50%);
+              opacity: 0; transition: opacity 1s ease; pointer-events: none;
+          }
           .gradient-layer {
               background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 40px);
               position: absolute; top: 0; left: 0; width: 100%; height: 100%;

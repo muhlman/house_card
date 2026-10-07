@@ -122,9 +122,13 @@ rooms:
 # "on" for anything else) or while today is inside the from / to window (MM-DD, may wrap the year).
 overlays:
   - entity: person.one
-    image: vehicle_1_{weather}_{time}.png
+    image: vehicle_1_{weather}_{time}.png   # full-frame overlay: drawn exactly where it was generated
   - entity: person.two
-    image: vehicle_2_{weather}_{time}.png
+    image: sprites/vehicle_2_{weather}_{time}.png   # positioned sprite: a cropped image placed by you
+    x: 74                                   # centre, % of the card
+    y: 66
+    width: 16                               # % of the card width; height follows the image
+    z: 5                                    # optional stacking; default = y, so lower objects draw in front
   - name: Halloween                       # decorations by date - the real weather stays underneath
     from: "10-24"
     to: "10-31"
@@ -190,6 +194,15 @@ you every weather variation for free - this is the recommended way to do holiday
 works: a lit porch while a light is on, a bike while its tracker is home, a party while an
 `input_boolean` is set.
 
+**Full-frame or positioned.** Without `x` / `y` an overlay is a full-frame image drawn with the same
+scaling as the house, so it lands exactly where it was generated. With `x` and `y` it becomes a
+positioned sprite: a cropped image centred on that point and scaled to `width` percent of the card,
+which you can move in config without regenerating. Isometric projection has no perspective, so a
+sprite stays geometrically correct anywhere on the ground plane; only night lighting is subtly
+position-dependent. Stacking follows `z`, defaulting to `y` so that whatever sits lower on screen
+(nearer the camera) draws in front. Sprites assume the card is in aspect-ratio mode (the default);
+with a fixed `height` the house is cropped and sprite positions shift with it.
+
 Filename tokens: `{time}` → `day` / `night`; `{weather}` → the suffix from the table above
 (empty for clear skies); `{season}` → `spring` / `summer` / `autumn` / `winter`. Missing
 variants fall back: the weather token is dropped first, then the season. So on a snowy winter
@@ -249,7 +262,9 @@ The free tier is enough for the whole image set; keep the key private and never 
 4. Run the remaining steps. Every output is resized to the master's size. Vehicles are added to
    your finished summer day and night images as local edits and cut out by difference, so they sit
    in the right place at the right scale; an optional per-vehicle region limits where changes are
-   kept. Step 8 shows thumbnails with the overlays composited on the house for checking.
+   kept. Each vehicle is also saved as a cropped sprite in `sprites/` (all of its variants share one
+   crop box), and the notebook prints the `x`, `y` and `width` that place it where it was generated.
+   Step 8 shows thumbnails with the overlays composited on the house for checking.
 5. Download the zip in step 9 and copy its contents into your `image_path` folder.
 
 ---
