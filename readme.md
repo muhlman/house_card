@@ -232,7 +232,8 @@ The free tier is enough for the whole image set; keep the key private and never 
 1. Click the **Open in Colab** button above.
 2. In step 1 paste your Google API key (from <https://aistudio.google.com/apikey>), describe your
    house, pick a model (`gemini-nano-banana-2.1` by default) and, if you want driveway overlays,
-   describe up to two vehicles. With vehicles set, the houses are generated with an empty driveway.
+   describe up to two vehicles, each with its own parking spot (e.g. left vs right garage door) so
+   both can show at once. With vehicles set, the houses are generated with an empty driveway.
 3. Upload photos of your house in step 2 and generate the master in step 4. Re-run until it looks right.
 4. Run the remaining steps. Every output is resized to the master's size, overlays are keyed to
    transparency, and step 8 shows thumbnails with the overlays composited on the house for checking.
