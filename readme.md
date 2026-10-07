@@ -100,6 +100,7 @@ party_mode_entity: input_boolean.gaming_mode
 # aspect_ratio: "4:3"             # default; the card sets its height from its width
 # height: 350                     # fixed height in px instead (the original, cropping behaviour)
 # image_fit: contain              # letterbox instead of cover
+# footer: overlay                 # float the advisory over the image (upstream look); default "below" keeps the image clear
 
 # --- Testing ---
 # test_weather_state: snowy       # forces the ANIMATIONS and advisory only; the house image
@@ -150,6 +151,8 @@ events:
 
 Notes:
 
+* The advisory footer sits below the image by default so nothing is covered; `footer: overlay` restores the
+  upstream layout where it floats over the lower part of the picture.
 * `title` is accepted but not displayed.
 * The home-median pill that `weight` feeds is hidden by the card's CSS, so `weight` has no
   visible effect unless you re-enable `.median-pill`.
