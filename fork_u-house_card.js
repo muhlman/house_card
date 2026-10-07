@@ -261,9 +261,9 @@ class ForkUHouseCard extends HTMLElement {
 
     // Date window test on MM-DD strings; a window may wrap the year end (12-14 .. 01-14).
     _inDateWindow(from, to) {
-        const now = new Date();
-        const today = (now.getMonth() + 1) * 100 + now.getDate();
         const parse = (v) => { const m = String(v || '').match(/^(\d{1,2})-(\d{1,2})$/); return m ? parseInt(m[1], 10) * 100 + parseInt(m[2], 10) : null; };
+        const now = new Date();
+        const today = parse(this._config.test_date) ?? ((now.getMonth() + 1) * 100 + now.getDate());
         const a = parse(from), b = parse(to ?? from);
         if (a === null || b === null) return false;
         return a <= b ? (today >= a && today <= b) : (today >= a || today <= b);
@@ -272,12 +272,19 @@ class ForkUHouseCard extends HTMLElement {
     // Shared trigger for events and overlays: entity in one of its states, or today inside
     // the from/to window. With neither configured, `always` decides (overlays: on, events: off).
     // Default state is "home" for person / device_tracker entities and "on" for anything else.
+    // Entity state with an optional test override: test_states: { person.mike: not_home }
+    _stateOf(entityId) {
+        const t = this._config.test_states;
+        if (t && Object.prototype.hasOwnProperty.call(t, entityId)) return String(t[entityId]);
+        return this._hass.states[entityId]?.state;
+    }
+
     _isActive(cfg, always) {
         if (cfg.entity) {
             const isPresence = /^(person|device_tracker)\./.test(cfg.entity);
             const want = cfg.states || cfg.state || (isPresence ? 'home' : 'on');
             const wanted = Array.isArray(want) ? want : [want];
-            if (wanted.includes(this._hass.states[cfg.entity]?.state)) return true;
+            if (wanted.includes(this._stateOf(cfg.entity))) return true;
         }
         if (cfg.from && this._inDateWindow(cfg.from, cfg.to)) return true;
         return !cfg.entity && !cfg.from ? always : false;

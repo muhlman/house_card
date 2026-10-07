@@ -102,9 +102,12 @@ party_mode_entity: input_boolean.gaming_mode
 # image_fit: contain              # letterbox instead of cover
 # footer: overlay                 # float the advisory over the image (upstream look); default "below" keeps the image clear
 
-# --- Testing ---
+# --- Testing (remove when done) ---
 # test_weather_state: snowy       # forces the ANIMATIONS and advisory only; the house image
-                                  # still follows weather_entity. Remove when done.
+                                  # still follows weather_entity
+# test_states:                    # pretend entities are in these states (overlays and events)
+#   person.one: not_home
+# test_date: "10-28"              # pretend today is this MM-DD (date-window overlays and events, Christmas)
 
 # --- Room badges (required, at least one) ---
 # x / y are percentages of the card, 0,0 top-left; the badge is centred on the point.
