@@ -254,7 +254,8 @@ The free tier is enough for the whole image set; keep the key private and never 
 
 **Steps:**
 1. Click the **Open in Colab** button above.
-2. In step 1 paste your Google API key (from <https://aistudio.google.com/apikey>), describe your
+2. In step 1 paste your Google API key (from <https://aistudio.google.com/apikey>), or store it once in
+   Colab's Secrets as `GOOGLE_API_KEY` and leave the field empty. Describe your
    house, pick a model (`gemini-nano-banana-2.1` by default) and, if you want driveway overlays,
    describe up to two vehicles, each with its own parking spot (e.g. left vs right garage door) so
    both can show at once. With vehicles set, the houses are generated with an empty driveway.
