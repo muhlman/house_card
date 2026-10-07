@@ -201,11 +201,15 @@ Overlay sets are per overlay, with only the plain day and night files required:
 
 Generate all required house assets for free using Google's cloud infrastructure and the Gemini API. No installation required on your computer.
 
+Both the Colab notebook and the local script need a Google API key. Create one at
+<https://aistudio.google.com/apikey> (sign in with a Google account, click **Create API key**).
+The free tier is enough for the whole image set; keep the key private and never commit it.
+
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/muhlman/house_card/blob/main/colab_generator/generate_house_assets.ipynb)
 
 **Steps:**
 1. Click the **Open in Colab** button above.
-2. Get a free API Key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Paste your Google API key (from <https://aistudio.google.com/apikey>) when prompted.
 3. Upload photos of your house when prompted.
 4. Run the notebook (select `gemini-2.5-flash-image` for **Free Tier** generation).
 
@@ -213,7 +217,7 @@ Generate all required house assets for free using Google's cloud infrastructure 
 
 ### Local Generation (Advanced)
 
-For automated or semi-automated generation using **Gemini 3 Pro** locally, use the `image_generation/` folder and the `generate_house_images.py` script.
+For automated or semi-automated generation using **Gemini 3 Pro** locally, use the `image_generation/` folder and the `generate_house_images.py` script. Export the same Google API key as `GOOGLE_API_KEY` before running it.
 
 ### Output files
 

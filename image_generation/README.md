@@ -13,6 +13,8 @@ Workflow for generating isometric house graphics using Gemini 3 Pro API.
 
 ## Setup
 
+Create a Google API key at <https://aistudio.google.com/apikey>, then:
+
 ```bash
 pip install -r requirements.txt
 export GOOGLE_API_KEY=your_key
