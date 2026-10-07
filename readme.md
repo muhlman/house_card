@@ -54,12 +54,14 @@ badges, and a one-line "storyteller" advisory built from your weather and air se
 1. HACS → **Frontend** → three-dot menu → **Custom repositories**.
 2. Add `https://github.com/muhlman/house_card`, category **Lovelace**, then **Download**.
 3. HACS registers the resource and installs to `config/www/community/house_card/`. Hard-refresh your browser.
+4. Put your images in `config/www/house_card/images/` - **not** inside the HACS folder. HACS deletes and
+   recreates `config/www/community/house_card/` on every update, and anything you stored there goes with it.
 
 ### Manual
 
 1. Copy `fork_u-house_card.js` to `config/www/house_card/fork_u-house_card.js`.
 2. Dashboard → Resources → add `/local/house_card/fork_u-house_card.js` as a **JavaScript module**.
-3. Set `image_path: /local/house_card/images/` in the card config (see below).
+3. Put your images in `config/www/house_card/images/` (the default `image_path`).
 
 ## ⚙️ Configuration
 
@@ -70,7 +72,7 @@ type: custom:fork-u-house-card
 language: en                      # en (default) or pl
 
 # --- Images ---
-image_path: /local/community/house_card/images/   # default; folder holding the PNGs below
+image_path: /local/house_card/images/   # default = config/www/house_card/images/ (outside the HACS folder)
 
 # Weather variants are used automatically whenever the file exists, so just add images.
 # To stop one from showing, turn it off (key order can be img_{season}_{time}_{weather}
@@ -286,7 +288,7 @@ produces the older 42-file set (no hail) plus gaming variants the card ignores; 
 1. **Reference Images** – Place photos of your house in `image_generation/reference/` (Street View, Satellite).
 2. **Master** – Generate the master reference image (Summer, Day, Sunny) and save as `image_generation/master/_master_reference.png`.
 3. **Variants** – Run the script (`python generate_house_images.py`) or use `--export-prompts` to export prompts for manual use in [Gemini](https://gemini.google.com).
-4. **Results** – Copy `image_generation/output/*.png` to the folder your `image_path` points at (default `config/www/community/house_card/images/`).
+4. **Results** – Copy `image_generation/output/*.png` to the folder your `image_path` points at (default `config/www/house_card/images/`).
 
 Details: [image_generation/README.md](image_generation/README.md)
 

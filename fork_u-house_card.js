@@ -115,7 +115,7 @@ class ForkUHouseCard extends HTMLElement {
     static getStubConfig() {
       return {
         language: "pl",
-        image_path: "/local/community/house_card/images/",
+        image_path: "/local/house_card/images/",
         
         // Entities
         weather_entity: "weather.forecast_home",
@@ -212,8 +212,9 @@ class ForkUHouseCard extends HTMLElement {
         return null;
     }
 
+    // Default is OUTSIDE the HACS-managed folder (config/www/community/...), which HACS wipes on every update.
     _imagePath() {
-        return this._config.image_path || "/local/community/house_card/images/";
+        return this._config.image_path || "/local/house_card/images/";
     }
 
     // Overlay image candidates, most specific first. Tokens: {time} day|night, {season},
