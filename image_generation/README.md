@@ -1,4 +1,8 @@
-# Image Generation for Fork U-House Card
+# Image Generation for Fork U-House Card (local script)
+
+> The Colab notebook in `../colab_generator/` is the maintained generator and covers the full image
+> set plus vehicle overlays. This script is the older local path and has not been updated for hail,
+> the overcast weather mapping or overlays.
 
 Workflow for generating isometric house graphics using Gemini 3 Pro API.
 

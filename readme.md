@@ -192,9 +192,9 @@ switched off with its `img_*: false` flag.
 Overlay sets are per overlay, with only the plain day and night files required:
 `vehicle_1_day.png`, `vehicle_1_night.png`, plus any of `vehicle_1_{overcast|rainy|snowy|fog|lightning|hail}_{day|night}.png`.
 
-> The bundled generator (`image_generation/`, Colab notebook) predates the hail variants and also
-> produces `*_overcast_*` and `gaming_*` files that the card never requests. Add hail prompts if you
-> want them, and ignore the overcast and gaming output.
+> The Colab notebook below generates this whole set (optionally skipping summer snow and winter hail)
+> plus the vehicle overlays. The older local script in `image_generation/` has not been updated for
+> hail, the overcast mapping or overlays.
 
 ## 🖼️ Image Generation Workflow
 
@@ -210,20 +210,26 @@ The free tier is enough for the whole image set; keep the key private and never 
 
 **Steps:**
 1. Click the **Open in Colab** button above.
-2. Paste your Google API key (from <https://aistudio.google.com/apikey>) when prompted.
-3. Upload photos of your house when prompted.
-4. Run the notebook (select `gemini-2.5-flash-image` for **Free Tier** generation).
+2. In step 1 paste your Google API key (from <https://aistudio.google.com/apikey>), describe your
+   house, pick a model (`gemini-nano-banana-2.1` by default) and, if you want driveway overlays,
+   describe up to two vehicles. With vehicles set, the houses are generated with an empty driveway.
+3. Upload photos of your house in step 2 and generate the master in step 4. Re-run until it looks right.
+4. Run the remaining steps. Every output is resized to the master's size, overlays are keyed to
+   transparency, and step 8 shows thumbnails with the overlays composited on the house for checking.
+5. Download the zip in step 9 and copy its contents into your `image_path` folder.
 
 ---
 
 ### Local Generation (Advanced)
 
-For automated or semi-automated generation using **Gemini 3 Pro** locally, use the `image_generation/` folder and the `generate_house_images.py` script. Export the same Google API key as `GOOGLE_API_KEY` before running it.
+The `image_generation/` folder holds the upstream local script (`generate_house_images.py`, legacy
+`google-generativeai` SDK). It lags the notebook: no hail, no overcast mapping, no overlays. Export
+the same Google API key as `GOOGLE_API_KEY` before running it.
 
 ### Output files
 
-See [Images](#images) above for the full list of 50 files the card can use. The generator
-covers 42 of them (no hail) and additionally emits overcast and gaming variants the card ignores.
+See [Images](#images) above for the full list of 58 files the card can use. The local script still
+produces the older 42-file set (no hail) plus gaming variants the card ignores; prefer the notebook.
 
 ### Workflow
 
