@@ -614,7 +614,7 @@ class ForkUHouseCard extends HTMLElement {
     // `height: 350` in the card config restores the original fixed-height behaviour.
     _sizeCss() {
         const h = parseInt(this._config.height, 10);
-        if (!isNaN(h) && h > 0) return `height: ${h}px;`;
+        if (!isNaN(h) && h > 0) return `height: ${h}px;`;  // image area height; the footer adds to it unless footer: overlay
         const ratio = String(this._config.aspect_ratio || '4:3').replace(':', ' / ');
         return `height: auto; aspect-ratio: ${ratio};`;
     }
@@ -622,11 +622,13 @@ class ForkUHouseCard extends HTMLElement {
     _render() {
       const sizeCss = this._sizeCss();
       const imageFit = this._config.image_fit === 'contain' ? 'contain' : 'cover';
+      // footer: "below" (default) keeps the whole image visible; "overlay" is the original look
+      const footerOverlay = this._config.footer === 'overlay';
       this.shadowRoot.innerHTML = `
         <style>
           :host { display: block; --fork-u-bg: #1e2024; --color-cold: #60A5FA; --color-opt: #34D399; --color-warm: #FBBF24; --color-hot: #F87171; }
           .card {
-              position: relative; display: flex; flex-direction: column; width: 100%; ${sizeCss}
+              position: relative; display: flex; flex-direction: column; width: 100%;
               overflow: hidden;
               text-shadow: rgba(0,0,0,0.4) 0 1px 0px;
               box-shadow: 0 4px 2px rgba(0,0,0,0.3);
@@ -707,8 +709,9 @@ class ForkUHouseCard extends HTMLElement {
           .badge-name { font-size: 0.55rem; color: #aaa; text-transform: uppercase; margin-bottom: 2px; }
           .badge-val { font-size: 0.80rem; font-weight: 700; color: #fff; }
           
+          .stage { position: relative; width: 100%; ${sizeCss} }
           .footer {
-              position: absolute; bottom: 0; left: 0; width: 100%; z-index: 5;
+              position: ${footerOverlay ? 'absolute' : 'relative'}; bottom: 0; left: 0; width: 100%; z-index: 5;
               background: rgba(10, 10, 15, 0.25); backdrop-filter: blur(15px);
               border-top: 1px solid rgba(255,255,255,0.05); padding: 12px 16px;
               display: flex; align-items: center; gap: 12px; box-sizing: border-box; transition: background 0.3s;
@@ -763,17 +766,19 @@ class ForkUHouseCard extends HTMLElement {
           }
         </style>
         <div class="card">
-          <div class="bg-image"></div>
-          <div class="overlay-layer"></div>
-          <div class="gradient-layer"></div>
-          <div class="dim-layer"></div>
-          <div class="ambient-layer">
-              <div class="ambient-light blob-1"></div>
-              <div class="ambient-light blob-2"></div>
-              <div class="ambient-light blob-3"></div>
+          <div class="stage">
+            <div class="bg-image"></div>
+            <div class="overlay-layer"></div>
+            <div class="gradient-layer"></div>
+            <div class="dim-layer"></div>
+            <div class="ambient-layer">
+                <div class="ambient-light blob-1"></div>
+                <div class="ambient-light blob-2"></div>
+                <div class="ambient-light blob-3"></div>
+            </div>
+            <canvas id="weatherCanvas"></canvas>
+            <div class="badges-layer"></div>
           </div>
-          <canvas id="weatherCanvas"></canvas>
-          <div class="badges-layer"></div>
           <div class="footer" data-status="normal">
               <div class="median-pill">Dom: --</div>
               <div class="footer-content">${this._t('loading')}</div>
@@ -789,8 +794,8 @@ class ForkUHouseCard extends HTMLElement {
   
     _resizeCanvas() {
       if (!this._canvas) return;
-      const card = this.shadowRoot.querySelector('.card');
-      if (card) { this._canvas.width = card.clientWidth; this._canvas.height = card.clientHeight; }
+      const stage = this.shadowRoot.querySelector('.stage') || this.shadowRoot.querySelector('.card');
+      if (stage) { this._canvas.width = stage.clientWidth; this._canvas.height = stage.clientHeight; }
     }
 
     // --- ANIMATIONS ---
