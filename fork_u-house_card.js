@@ -268,17 +268,24 @@ class ForkUHouseCard extends HTMLElement {
         return a <= b ? (today >= a && today <= b) : (today >= a || today <= b);
     }
 
+    // Shared trigger for events and overlays: entity in one of its states, or today inside
+    // the from/to window. With neither configured, `always` decides (overlays: on, events: off).
+    // Default state is "home" for person / device_tracker entities and "on" for anything else.
+    _isActive(cfg, always) {
+        if (cfg.entity) {
+            const isPresence = /^(person|device_tracker)\./.test(cfg.entity);
+            const want = cfg.states || cfg.state || (isPresence ? 'home' : 'on');
+            const wanted = Array.isArray(want) ? want : [want];
+            if (wanted.includes(this._hass.states[cfg.entity]?.state)) return true;
+        }
+        if (cfg.from && this._inDateWindow(cfg.from, cfg.to)) return true;
+        return !cfg.entity && !cfg.from ? always : false;
+    }
+
     // First event whose entity is in one of its states, or whose date window contains today.
     _activeEvent() {
         const events = Array.isArray(this._config.events) ? this._config.events : [];
-        return events.find(ev => {
-            if (ev.entity) {
-                const want = ev.states || ev.state || 'on';
-                const wanted = Array.isArray(want) ? want : [want];
-                if (wanted.includes(this._hass.states[ev.entity]?.state)) return true;
-            }
-            return ev.from ? this._inDateWindow(ev.from, ev.to) : false;
-        }) || null;
+        return events.find(ev => this._isActive(ev, false)) || null;
     }
 
     // Returns house image candidates, most specific first; the first that exists is shown.
@@ -368,8 +375,10 @@ class ForkUHouseCard extends HTMLElement {
       }
     }
   
-    // Optional overlays (e.g. a car per person): shown while the entity is in one of the
-    // configured states (default: "home"). Images are full-frame PNGs sized like the house.
+    // Optional overlays (a car per person, holiday decorations): shown while the entity is in
+    // one of the configured states (default "home" for person / device_tracker, else "on") or
+    // while today is inside from/to.
+    // Images are full-frame transparent PNGs sized like the house.
     _updateOverlays() {
       const layer = this.shadowRoot.querySelector('.overlay-layer');
       if (!layer) return;
@@ -383,10 +392,7 @@ class ForkUHouseCard extends HTMLElement {
               layer.appendChild(el);
               this._overlayEls[i] = el;
           }
-          const want = ov.states || ov.state || 'home';
-          const wanted = Array.isArray(want) ? want : [want];
-          const state = ov.entity ? this._hass.states[ov.entity]?.state : undefined;
-          const visible = ov.entity ? wanted.includes(state) : true;
+          const visible = this._isActive(ov, true);
           const candidates = ov.image ? this._overlayCandidates(ov.image) : [];
           const key = candidates.join('|');
           if (candidates.length && el.dataset.key !== key) {

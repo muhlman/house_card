@@ -117,22 +117,28 @@ rooms:
     y: 8
     weight: 0
 
-# --- Overlays (optional) ---
+# --- Overlays (optional): transparent images drawn over the house ---
+# Shown while the entity is in one of its states (default "home" for person / device_tracker,
+# "on" for anything else) or while today is inside the from / to window (MM-DD, may wrap the year).
 overlays:
   - entity: person.one
     image: vehicle_1_{weather}_{time}.png
   - entity: person.two
     image: vehicle_2_{weather}_{time}.png
-    states: [home]                # default "home"; a list is accepted
+  - name: Halloween                       # decorations by date - the real weather stays underneath
+    from: "10-24"
+    to: "10-31"
+    image: event_halloween_{time}.png
+  - name: Birthday
+    entity: input_boolean.birthday_party
+    image: event_birthday_{season}_{time}.png
 
-# --- Events (optional): swap the whole house image for a holiday or party ---
+# --- Events (optional): replace the whole house image instead ---
+# Same triggers as overlays. Use this only for scenes the overlays cannot carry.
 events:
   - name: 4th of July
-    from: "07-04"                 # MM-DD; add `to:` for a range, windows may wrap the year end
+    from: "07-04"
     image: event_july4_{time}.png
-  - name: Birthday
-    entity: input_boolean.birthday_party   # active while the entity is "on" (or in `states:`)
-    image: event_birthday_{season}_{time}.png
 # xmas: false                     # disable the built-in 14 Dec - 14 Jan Christmas image
 ```
 
@@ -175,10 +181,14 @@ Notes:
 ### Overlays
 
 Overlays are full-frame PNGs with transparency, the **same pixel size and camera as the house
-images**, drawn between the house and the weather effects while their entity is in one of the
-configured states. The example above puts a vehicle on the driveway while a person is home, but
-any entity works: a lit porch while a light is on, a bike while its tracker is home, decorations
-while an `input_boolean` is set.
+images**, drawn between the house and the weather effects. Each is shown while its entity is in
+one of the configured states, or while today falls inside its `from` / `to` window, or always if
+it has neither. The examples above put a vehicle on the driveway while a person is home and
+Halloween decorations on the house for the last week of October. Because the house image
+underneath still follows season, weather and time, a two-file day/night decoration overlay gives
+you every weather variation for free - this is the recommended way to do holidays. Any entity
+works: a lit porch while a light is on, a bike while its tracker is home, a party while an
+`input_boolean` is set.
 
 Filename tokens: `{time}` → `day` / `night`; `{weather}` → the suffix from the table above
 (empty for clear skies); `{season}` → `spring` / `summer` / `autumn` / `winter`. Missing
@@ -203,8 +213,9 @@ for overlays. The full set the card can request is **58 files**:
 Every weather image is optional: if a file is missing the base image is used, and any one can be
 switched off with its `img_*: false` flag.
 
-Event images are full house renders named `event_{name}_{day|night}.png`, or
-`event_{name}_{season}_{day|night}.png` for events that can fall in any season (birthdays). The
+Event decorations are overlays named `event_{name}_{day|night}.png`, or
+`event_{name}_{season}_{day|night}.png` for events that can fall in any season (birthdays); the
+same names work as full house renders for the `events:` config if you generate them that way. The
 notebook can generate: july4, birthday, halloween, thanksgiving, new_year, easter, valentines,
 st_patricks, graduation, game_day.
 
