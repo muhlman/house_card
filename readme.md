@@ -149,7 +149,8 @@ Notes:
    | `snowy`, `snowy-rainy` | `snowy` |
    | `hail` | `hail` |
    | `fog` | `fog` |
-   | `sunny`, `clear-night`, `cloudy`, `partlycloudy`, `windy`, `exceptional` | *(none - base image)* |
+   | `cloudy`, `partlycloudy` | `overcast` |
+   | `sunny`, `clear-night`, `windy`, `exceptional` | *(none - base image)* |
 
 4. If the suffix is set, the card tries `{season}_{suffix}_{time}.png` and shows it when the file
    exists, otherwise `{season}_{time}.png`. Setting `img_{season}_{time}_{suffix}: false` skips
@@ -166,7 +167,7 @@ any entity works: a lit porch while a light is on, a bike while its tracker is h
 while an `input_boolean` is set.
 
 Filename tokens: `{time}` → `day` / `night`; `{weather}` → the suffix from the table above
-(empty for clear or cloudy); `{season}` → `spring` / `summer` / `autumn` / `winter`. Missing
+(empty for clear skies); `{season}` → `spring` / `summer` / `autumn` / `winter`. Missing
 variants fall back: the weather token is dropped first, then the season. So on a snowy winter
 night `vehicle_1_{season}_{weather}_{time}.png` tries `vehicle_1_winter_snowy_night.png`,
 `vehicle_1_snowy_night.png`, `vehicle_1_winter_night.png`, `vehicle_1_night.png`. Only the plain
@@ -177,19 +178,19 @@ with `/` or `http` are used as-is. Misses are remembered per page load, so reloa
 
 All images share one frame: same camera, position and scale as the master reference, 4:3
 (the originals are 1448 × 1086), solid dark background for the houses, transparent background
-for overlays. The full set the card can request is **50 files**:
+for overlays. The full set the card can request is **58 files**:
 
 | Category | Count | Files |
 |---|---|---|
-| Base | 8 | `{season}_{day\|night}.png` - also used for cloudy and partly cloudy |
-| Weather | 40 | `{season}_{rainy\|snowy\|fog\|lightning\|hail}_{day\|night}.png` |
+| Base | 8 | `{season}_{day\|night}.png` - clear skies; also the fallback for every missing variant |
+| Weather | 48 | `{season}_{overcast\|rainy\|snowy\|fog\|lightning\|hail}_{day\|night}.png` |
 | Christmas | 2 | `winter_xmas_day.png`, `winter_xmas_night.png` |
 
 Every weather image is optional: if a file is missing the base image is used, and any one can be
 switched off with its `img_*: false` flag.
 
 Overlay sets are per overlay, with only the plain day and night files required:
-`vehicle_1_day.png`, `vehicle_1_night.png`, plus any of `vehicle_1_{rainy|snowy|fog|lightning|hail}_{day|night}.png`.
+`vehicle_1_day.png`, `vehicle_1_night.png`, plus any of `vehicle_1_{overcast|rainy|snowy|fog|lightning|hail}_{day|night}.png`.
 
 > The bundled generator (`image_generation/`, Colab notebook) predates the hail variants and also
 > produces `*_overcast_*` and `gaming_*` files that the card never requests. Add hail prompts if you

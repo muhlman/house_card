@@ -196,7 +196,9 @@ class ForkUHouseCard extends HTMLElement {
         return season.toLowerCase();
     }
 
-    // HA weather state -> filename suffix; null for sunny/cloudy/partlycloudy (no weather image).
+    // HA weather state -> filename suffix; null for sunny / clear-night (base image).
+    // cloudy and partlycloudy map to "overcast", which falls back to the base image when
+    // no overcast file exists.
     _weatherSuffix() {
         const wStateRaw = this._hass.states[this._config.weather_entity]?.state;
         if (!wStateRaw) return null;
@@ -206,6 +208,7 @@ class ForkUHouseCard extends HTMLElement {
         if (['snowy', 'snowy-rainy'].includes(s)) return 'snowy';
         if (s === 'hail') return 'hail';
         if (s === 'fog') return 'fog';
+        if (['cloudy', 'partlycloudy'].includes(s)) return 'overcast';
         return null;
     }
 
