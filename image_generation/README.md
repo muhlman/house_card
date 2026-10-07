@@ -33,7 +33,7 @@ export GOOGLE_API_KEY=your_key
 3. Phases 2–4: `python generate_house_images.py --phase base`, `--phase weather`, `--phase xmas` (or `--phase all`).
 4. Copy `output/*.png` to `../images/` for the card to use.
 
-**Note:** Standard Gemini API models (gemini-1.5, gemini-2.0) are text-only. For image generation use Vertex AI with `gemini-3-pro-image-preview` or Imagen, or run prompts manually (Option B).
+**Note:** Standard Gemini API models (gemini-1.5, gemini-2.0) are text-only. For image generation use Vertex AI with `gemini-3-pro-image` or Imagen, or run prompts manually (Option B).
 
 ### Option B: Manual (prompts export)
 

@@ -104,7 +104,7 @@ Specific for THIS request:
 IDENTICAL camera angle and position. 4K RAW. No watermark.
 """
 
-def generate_with_gemini(prompt: str, reference_images: list[Path], output_path: Path, model_name: str = "models/gemini-3-pro-image-preview") -> bool:
+def generate_with_gemini(prompt: str, reference_images: list[Path], output_path: Path, model_name: str = "models/gemini-3-pro-image") -> bool:
     try:
         import google.generativeai as genai
     except ImportError:
@@ -194,7 +194,7 @@ def run_phase_master():
         print("Warning: No reference images found in reference/ folder.")
     
     models_to_try = [
-        "models/gemini-3-pro-image-preview",
+        "models/gemini-3-pro-image",
         "models/gemini-2.5-flash-image"
     ]
     
@@ -227,8 +227,8 @@ def main():
         print("Master image not found! Run --phase master first.")
         return
 
-    preview_model = "models/gemini-3-pro-image-preview"
-    hires_model = "models/gemini-3-pro-image-preview" # Placeholder, update if a specific hires model is available
+    preview_model = "models/gemini-3-pro-image"
+    hires_model = "models/gemini-3-pro-image" # Placeholder, update if a specific hires model is available
 
     if args.phase == "all":
         run_set(OUT_DIR, master, preview_model)
